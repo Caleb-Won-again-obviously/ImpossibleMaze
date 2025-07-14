@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>???</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+        }
+        canvas {
+            display: block;
+            background: #222;
+        }
+    </style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let width = window.innerWidth;
+let height = window.innerHeight;
+canvas.width = width;
+canvas.height = height;
+
+window.addEventListener('resize', () => {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+});
+
+let player = { x: 50, y: height - 60, size: 30, color: 'lime', vy: 0, onGround: false };
+let gravity = 0.7;
+let obstacles = [];
+let frame = 0;
+
+function createObstacle() {
+    let w = 30 + Math.random() * 50;
+    let h = 30 + Math.random() * 120;
+    obstacles.push({ x: width, y: height - h, width: w, height: h });
+}
+
+function updatePlayer() {
+    player.vy += gravity;
+    player.y += player.vy;
+
+    if (player.y + player.size >= height) {
+        player.y = height - player.size;
+        player.vy = 0;
+        player.onGround = true;
+    } else {
+        player.onGround = false;
+    }
+}
+
+function moveObstacles() {
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+        obstacles[i].x -= 5;
+        if (obstacles[i].x + obstacles[i].width < 0) {
+            obstacles.splice(i, 1);
+        }
+    }
+}
+
+function checkCollision() {
+    for (let obs of obstacles) {
+        if (
+            player.x < obs.x + obs.width &&
+            player.x + player.size > obs.x &&
+            player.y < obs.y + obs.height &&
+            player.y + player.size > obs.y
+        ) {
+            setTimeout(() => {
+                alert('You lose! Refresh to retry.');
+                document.location.reload();
+            }, 10);
+            return;
+        }
+    }
+}
+
+function drawPlayer() {
+    ctx.fillStyle = player.color;
+    ctx.fillRect(player.x, player.y, player.size, player.size);
+}
+
+function drawObstacles() {
+    ctx.fillStyle = 'red';
+    for (let obs of obstacles) {
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+    }
+}
+
+function gameLoop() {
+    ctx.clearRect(0, 0, width, height);
+
+    if (frame % 90 === 0) createObstacle();
+
+    updatePlayer();
+    moveObstacles();
+    checkCollision();
+
+    drawPlayer();
+    drawObstacles();
+
+    frame++;
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && player.onGround) {
+        player.vy = -15;
+    }
+});
+</script>
+</body>
+</html>
